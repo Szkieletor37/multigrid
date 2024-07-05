@@ -4,7 +4,8 @@ import numpy as np
 import plot
 
 # N = 2^10
-POW = 10
+# POW >= 2 (1だと動かない)
+POW = 2
 N = 2 ** POW
 
 
@@ -35,6 +36,11 @@ def generate_init_approximation_matrix(num_divisions):
 
 # 線形補間行列を生成
 def generate_interpolation_matrix(num_coarse_divisions, num_fine_divisions):
+
+    # debug
+    #print("num_coarse_divisions: ", num_coarse_divisions)
+    #print("num_fine_divisions: ", num_fine_divisions)
+
     # 両端の点は除く
     row_size = num_fine_divisions - 1
     col_size = num_coarse_divisions - 1
@@ -52,6 +58,12 @@ def generate_restriction_matrix(interpolation_matrix):
     return 0.5 * interpolation_matrix.T
 
 def weighted_jacobi_iter(num_divisions, init_approx_solution):
+
+    print('-' * 20)
+    print("Jacobi iter starting...")
+    print("N: ", num_divisions)
+    print("v_0: ", init_approx_solution)
+    print('-' * 20)
 
     mat_size = num_divisions - 1
 
@@ -77,8 +89,16 @@ def weighted_jacobi_iter(num_divisions, init_approx_solution):
 # Au = b の近似解 v を求める
 # multigrid(N, A, b) -> v
 def multigrid(num_divisions, approx_matrix, init_approx_solution, exact_solution):
-    # N == 1 なら終了
-    if num_divisions == 1:
+    print('-' * 20)
+    print("multigrid cycle starting...")
+    print("N: ", num_divisions)
+    print("A: ", approx_matrix)
+    print("v_0: ", init_approx_solution)
+    print("b: ", exact_solution)
+    print('-' * 20)
+
+    # N == 2 なら終了
+    if num_divisions == 2:
         return init_approx_solution
     
     approx_solution = init_approx_solution
@@ -91,7 +111,7 @@ def multigrid(num_divisions, approx_matrix, init_approx_solution, exact_solution
     residual = exact_solution - approx_matrix @ approx_solution
 
     # R, Iを生成
-    interpolation_matrix = generate_interpolation_matrix(num_divisions / 2, num_divisions)
+    interpolation_matrix = generate_interpolation_matrix(num_divisions // 2, num_divisions)
     restriction_matrix = generate_restriction_matrix(interpolation_matrix)
 
     # r_2h = Rr
@@ -101,7 +121,7 @@ def multigrid(num_divisions, approx_matrix, init_approx_solution, exact_solution
     fine_approx_matrix = restriction_matrix @ approx_matrix @ interpolation_matrix
 
     # E_2h を求める
-    approx_error = multigrid(num_divisions / 2, fine_approx_matrix, np.zeros(num_divisions / 2 - 2), restricted_residual)
+    approx_error = multigrid(num_divisions // 2, fine_approx_matrix, np.zeros(num_divisions // 2 - 1), restricted_residual)
 
     # E = IE_2h
     interpolated_approx_error = interpolation_matrix @ approx_error
@@ -126,7 +146,6 @@ def main():
     init_approx_matrix = generate_init_approximation_matrix(N)
 
     exact_solution = np.zeros(mat_size)
-    #temp = np.pi / N
     for i in range(N+1):
         if (i == 0) or (i == mat_size+1):
             continue
@@ -136,13 +155,11 @@ def main():
     print("init_approx_solution: ", init_approx_solution)
     print("init_approx_matrix: ", init_approx_matrix)
     print("exact_solution: ", exact_solution)
-    # TODO: exact_solution を plot する
     print("---")
     print("Plotting exact solution...")
     plot.plot_exact_solution(exact_solution)
 
-    #ans = multigrid(N, init_approx_matrix, init_approx_solution, exact_solution)
-    ans = 0
+    ans = multigrid(N, init_approx_matrix, init_approx_solution, exact_solution)
 
     print("Answer: ", ans)
 
