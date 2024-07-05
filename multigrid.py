@@ -9,13 +9,14 @@ N = 2 ** POW
 
 # 近似行列を生成
 def generate_init_approximation_matrix(num_divisions):
-    matrix = np.zeros((num_divisions-1, num_divisions-1))
+    mat_size = num_divisions - 1
+    matrix = np.zeros((mat_size, mat_size))
 
-    for i in range(num_divisions - 1):
+    for i in range(mat_size):
         if i == 0:
             matrix[i][i] = 2.0
             matrix[i][i+1] = -1.0
-        elif i == ((num_divisions - 1) - 1):
+        elif i == (mat_size - 1):
             matrix[i][i-1] = -1.0
             matrix[i][i] = 2.0
         else:
@@ -33,12 +34,12 @@ def generate_init_approximation_matrix(num_divisions):
 # 線形補間行列を生成
 def generate_interpolation_matrix(num_coarse_divisions, num_fine_divisions):
     # 両端の点は除く
-    rows = num_fine_divisions - 2
-    cols = num_coarse_divisions - 2
+    row_size = num_fine_divisions - 1
+    col_size = num_coarse_divisions - 1
 
-    matrix = np.zeros((rows, cols))
+    matrix = np.zeros((row_size, col_size))
 
-    for i in range(cols):
+    for i in range(col_size):
         matrix[2*i][i] = 0.5
         matrix[2*i+1][i] = 1.0
         matrix[2*i+2][i] = 0.5
@@ -50,15 +51,17 @@ def generate_restriction_matrix(interpolation_matrix):
 
 def weighted_jacobi_iter(num_divisions, init_approx_solution):
 
-    approx_solution = np.zeros(num_divisions - 2)
+    mat_size = num_divisions - 1
+
+    approx_solution = np.zeros(mat_size)
     weight = 2.0 / 3.0
 
-    jacobi_matrix = np.zeros((num_divisions - 2, num_divisions - 2))
+    jacobi_matrix = np.zeros((mat_size, mat_size))
 
-    for i in range(num_divisions - 2):
+    for i in range(mat_size):
         if i == 0:
             jacobi_matrix[i][i+1] = 0.5
-        elif i == ((num_divisions - 2) - 1):
+        elif i == (mat_size - 1):
             jacobi_matrix[i][i-1] = 0.5
         else:
             jacobi_matrix[i][i-1] = 0.5
@@ -112,17 +115,18 @@ def multigrid(num_divisions, approx_matrix, init_approx_solution, exact_solution
 
 def main():
     # 近似解の初期値はランダムとする
-    init_approx_solution = np.zeros(N - 2)
-    for i in range(N - 2):
+    mat_size = N - 1
+    init_approx_solution = np.zeros(mat_size)
+    for i in range(mat_size):
         init_approx_solution[i] = np.random.rand()
 
 
     init_approx_matrix = generate_init_approximation_matrix(N)
 
-    exact_solution = np.zeros(N-2)
+    exact_solution = np.zeros(mat_size)
     temp = np.pi / N
     for i in range(N):
-        if (i == 0) or (i == N-1):
+        if (i == 0) or (i == mat_size):
             continue
         else:
             exact_solution[i-1] = np.sin(((i * 1.0) / N) * temp)
