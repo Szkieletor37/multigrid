@@ -61,19 +61,11 @@ def multigrid(num_divisions, approx_matrix, init_approx_solution, exact_solution
 def main():
     # 近似解の初期値はランダムとする
     mat_size = N - 1
-    init_approx_solution = np.zeros(mat_size)
-    for i in range(mat_size):
-        init_approx_solution[i] = np.random.rand()
-
+    init_approx_solution = lib.generate_init_approximation_solution(mat_size)
 
     init_approx_matrix = lib.generate_init_approximation_matrix(N)
 
-    exact_solution = np.zeros(mat_size)
-    for i in range(N+1):
-        if (i == 0) or (i == mat_size+1):
-            continue
-        else:
-            exact_solution[i-1] = np.sin(((i * 1.0) / N) * np.pi)
+    exact_solution = lib.generate_exact_solution(N, mat_size)
 
     print("init_approx_solution: ", init_approx_solution)
     print("init_approx_matrix: ", init_approx_matrix)

@@ -1,3 +1,22 @@
+import numpy as np
+
+def generate_init_approximation_solution(vec_size):
+    init_approx_solution = np.zeros(vec_size)
+    for i in range(vec_size):
+        init_approx_solution[i] = np.random.rand()
+
+    return init_approx_solution
+
+def generate_exact_solution(num_divisions, vec_size):
+    exact_solution = np.zeros(vec_size)
+    for i in range(num_divisions + 1):
+        if (i == 0) or (i == vec_size+1):
+            continue
+        else:
+            exact_solution[i-1] = np.sin(((i * 1.0) / num_divisions) * np.pi)
+    
+    return exact_solution
+
 # 近似行列を生成
 def generate_init_approximation_matrix(num_divisions):
     mat_size = num_divisions - 1
