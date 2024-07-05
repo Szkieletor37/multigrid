@@ -1,6 +1,8 @@
 
 import numpy as np
 
+import plot
+
 # N = 2^10
 POW = 10
 N = 2 ** POW
@@ -124,17 +126,20 @@ def main():
     init_approx_matrix = generate_init_approximation_matrix(N)
 
     exact_solution = np.zeros(mat_size)
-    temp = np.pi / N
-    for i in range(N):
-        if (i == 0) or (i == mat_size):
+    #temp = np.pi / N
+    for i in range(N+1):
+        if (i == 0) or (i == mat_size+1):
             continue
         else:
-            exact_solution[i-1] = np.sin(((i * 1.0) / N) * temp)
+            exact_solution[i-1] = np.sin(((i * 1.0) / N) * np.pi)
 
     print("init_approx_solution: ", init_approx_solution)
     print("init_approx_matrix: ", init_approx_matrix)
     print("exact_solution: ", exact_solution)
     # TODO: exact_solution を plot する
+    print("---")
+    print("Plotting exact solution...")
+    plot.plot_exact_solution(exact_solution)
 
     #ans = multigrid(N, init_approx_matrix, init_approx_solution, exact_solution)
     ans = 0
