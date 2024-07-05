@@ -64,7 +64,7 @@ def generate_interpolation_matrix(num_coarse_divisions, num_fine_divisions):
 def generate_restriction_matrix(interpolation_matrix):
     return 0.5 * interpolation_matrix.T
 
-def weighted_jacobi_iter(num_divisions, init_approx_solution):
+def weighted_jacobi_iter(num_divisions, init_approx_solution, exact_solution):
 
     print('-' * 20)
     print("Jacobi iter starting...")
@@ -81,15 +81,16 @@ def weighted_jacobi_iter(num_divisions, init_approx_solution):
 
     for i in range(mat_size):
         if i == 0:
-            jacobi_matrix[i][i+1] = 0.5
+            jacobi_matrix[i][i+1] = 1.0
         elif i == (mat_size - 1):
-            jacobi_matrix[i][i-1] = 0.5
+            jacobi_matrix[i][i-1] = 1.0
         else:
-            jacobi_matrix[i][i-1] = 0.5
-            jacobi_matrix[i][i+1] = 0.5
+            jacobi_matrix[i][i-1] = 1.0
+            jacobi_matrix[i][i+1] = 1.0
 
-    intermediate_solution = jacobi_matrix @ init_approx_solution
-    approx_solution = (1.0 - weight) * init_approx_solution + weight * intermediate_solution
+
+    # (I - ω * D^-1 * A) * v + ω * D^-1 * b
+    approx_solution = (np.eye(mat_size) - (weight * 0.5 * jacobi_matrix)) @ init_approx_solution + weight * 0.5 * exact_solution
         
     return approx_solution
 
