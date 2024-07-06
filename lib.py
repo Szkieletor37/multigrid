@@ -64,33 +64,42 @@ def generate_interpolation_matrix(num_coarse_divisions, num_fine_divisions):
 def generate_restriction_matrix(interpolation_matrix):
     return 0.5 * interpolation_matrix.T
 
-def weighted_jacobi_iter(num_divisions, init_approx_solution, exact_solution):
+def weighted_jacobi_iter(num_divisions, approx_matrix, init_approx_solution, exact_solution):
 
-    print('-' * 20)
-    print("Jacobi iter starting...")
-    print("N: ", num_divisions)
-    print("v_0: ", init_approx_solution)
-    print('-' * 20)
+    #print('-' * 20)
+    #print("Jacobi iter starting...")
+    #print("N: ", num_divisions)
+    #print("A: ", approx_matrix)
+    #print("v_0: ", init_approx_solution)
+    #print('-' * 20)
 
     mat_size = num_divisions - 1
 
+    # D^-1
+    diag_approx_matrix = np.diag(np.diag(approx_matrix))
+    inv_diag_approx_matrix = np.linalg.inv(diag_approx_matrix)
+
+    # v の初期値
     approx_solution = np.zeros(mat_size)
+
+    # ω
     weight = 2.0 / 3.0
 
-    jacobi_matrix = np.zeros((mat_size, mat_size))
+    #jacobi_matrix = np.zeros((mat_size, mat_size))
+    jacobi_matrix = np.eye(mat_size) - weight * inv_diag_approx_matrix @ approx_matrix
 
-    for i in range(mat_size):
-        if i == 0:
-            jacobi_matrix[i][i+1] = 1.0
-        elif i == (mat_size - 1):
-            jacobi_matrix[i][i-1] = 1.0
-        else:
-            jacobi_matrix[i][i-1] = 1.0
-            jacobi_matrix[i][i+1] = 1.0
+    #for i in range(mat_size):
+    #    if i == 0:
+    #        jacobi_matrix[i][i+1] = 1.0
+    #    elif i == (mat_size - 1):
+    #        jacobi_matrix[i][i-1] = 1.0
+    #    else:
+    #        jacobi_matrix[i][i-1] = 1.0
+    #        jacobi_matrix[i][i+1] = 1.0
 
 
     # (I - ω * D^-1 * A) * v + ω * D^-1 * b
-    approx_solution = (np.eye(mat_size) - (weight * 0.5 * jacobi_matrix)) @ init_approx_solution + weight * 0.5 * exact_solution
+    #approx_solution = (np.eye(mat_size) - (weight * 0.5 * jacobi_matrix)) @ init_approx_solution + weight * 0.5 * exact_solution
+    approx_solution = jacobi_matrix @ init_approx_solution + weight * inv_diag_approx_matrix @ exact_solution
         
     return approx_solution
-
