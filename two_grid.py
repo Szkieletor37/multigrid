@@ -3,8 +3,10 @@ import matplotlib.pyplot as plt
 
 import lib, plot
 
-N_FINE = 16
+N_FINE = 1024
 N_COARSE = N_FINE // 2
+WAVENUM = 1
+JACOBI_ITER_NUM = 3
 
 def convert_latex_matrix(matrix):
     latex_matrix = "\\begin{bmatrix}\n"
@@ -17,7 +19,7 @@ def convert_latex_matrix(matrix):
         latex_matrix = latex_matrix[:-2] + "\\\\\n"
 
     latex_matrix += "\\end{bmatrix}"
-    print("S(LaTeX): ", latex_matrix)
+    #print("S(LaTeX): ", latex_matrix)
 
 def experiment_two_grid_iter_matrix(approx_matrix, interpolation_matrix, restriction_matrix, coarse_approx_matrix):
 
@@ -30,22 +32,30 @@ def experiment_two_grid_iter_matrix(approx_matrix, interpolation_matrix, restric
     # S の固有値を求める
     (two_grid_iter_mat_eigenvalues, two_grid_iter_mat_vectors) = np.linalg.eig(two_grid_iter_matrix)
 
-    np.set_printoptions(precision=4, suppress=True)
+    #np.set_printoptions(precision=4, suppress=True)
 
-    print("-" * 20)
-    print("反復行列S: ", two_grid_iter_matrix)
-    print("-" * 20)
-    convert_latex_matrix(two_grid_iter_matrix)
-    print("-" * 20)
-    print("S の固有値: ", two_grid_iter_mat_eigenvalues)
-    print("-" * 20)
-    print("S の固有ベクトル: ", two_grid_iter_mat_vectors)
+    #print("-" * 20)
+    #print("反復行列S: ", two_grid_iter_matrix)
+    #print("-" * 20)
+    #convert_latex_matrix(two_grid_iter_matrix)
+    #print("-" * 20)
+    #print("S の固有値: ", two_grid_iter_mat_eigenvalues)
+    #print("-" * 20)
+    #print("S の固有ベクトル: ", two_grid_iter_mat_vectors)
 
 def main():
 
     approx_matrix = lib.generate_init_approximation_matrix(N_FINE)
-    exact_solution = lib.generate_exact_solution(N_FINE, N_FINE - 1)
-    approx_solution = lib.generate_init_approximation_solution(N_FINE - 1)
+    #exact_solution = 1.0 / 3.0 * (lib.generate_exact_solution(N_FINE, N_FINE - 1, 1) + lib.generate_exact_solution(N_FINE, N_FINE - 1, 6) + lib.generate_exact_solution(N_FINE, N_FINE - 1, 36))
+    exact_solution = lib.generate_exact_solution(N_FINE, N_FINE - 1, WAVENUM)
+    neko = 1.0 / (N_FINE ** 2)
+    print("A: ", approx_matrix)
+    print("何かけてんの？: ", neko)
+    print("rhs: ", approx_matrix @ exact_solution)
+    scaled_rhs_vector = (1.0 / (N_FINE ** 2)) * approx_matrix @ exact_solution
+    #approx_solution = lib.generate_init_approximation_solution(N_FINE - 1)
+    approx_solution = np.zeros(N_FINE - 1)
+    #scaled_approx_solution = N_FINE * N_FINE * approx_solution
 
     init_error = np.linalg.norm(exact_solution - approx_solution)
 
@@ -54,8 +64,14 @@ def main():
     plot.plot_init_approx_solution(approx_solution, "Two-Grid Method, initial approx", N_FINE)
 
     # 重み付きヤコビを3回反復して v を出す
-    for i in range(3):
-        approx_solution = lib.weighted_jacobi_iter(N_FINE, approx_matrix, approx_solution, exact_solution)
+    print('-' * 20)
+    print(f"Pre-smoothing: Iteration for {JACOBI_ITER_NUM} times ...")
+    print("approx_solution (init): ", approx_solution)
+    print("exact_solution: ", exact_solution)
+    for i in range(JACOBI_ITER_NUM):
+        print(f"Iteration {i + 1} ...")
+        approx_solution = lib.weighted_jacobi_iter(N_FINE, approx_matrix, approx_solution, scaled_rhs_vector)
+        print("approx_solution: ", approx_solution)
         if i == 0:
             plt.figure()
             plot.plot_approximation_solution(approx_solution, "Weighted Jacobi Method, iter = 1", N_FINE)
@@ -64,14 +80,18 @@ def main():
             plot.plot_approximation_solution(approx_solution, "Weighted Jacobi Method, iter = 3", N_FINE)
 
     # 残差 r = b - Av
-    residual = exact_solution - approx_matrix @ approx_solution
+    residual = scaled_rhs_vector - approx_matrix @ approx_solution
+    print("residual: ", residual)
 
     # R, Iを生成
     interpolation_matrix = lib.generate_interpolation_matrix(N_COARSE, N_FINE)
     restriction_matrix = lib.generate_restriction_matrix(interpolation_matrix)
+    print("I: ", interpolation_matrix)
+    print("R: ", restriction_matrix)
 
     # r_2h = Rr
     restricted_residual = restriction_matrix @ residual
+    print("restricted_residual: ", restricted_residual)
 
     # A_2h = RAI
     coarse_approx_matrix = restriction_matrix @ approx_matrix @ interpolation_matrix
@@ -80,23 +100,40 @@ def main():
     experiment_two_grid_iter_matrix(approx_matrix, interpolation_matrix, restriction_matrix, coarse_approx_matrix)
 
     # E_2h を求める
-    init_approx_error = np.zeros(N_COARSE - 1)
+    approx_error = lib.generate_init_approximation_solution(N_COARSE - 1)
+
     # 重み付きヤコビを3回反復して v を出す
-    for _ in range(3):
-        approx_error = lib.weighted_jacobi_iter(N_COARSE, coarse_approx_matrix, init_approx_error, restricted_residual)
+    print('-' * 20)
+    print(f"Smoothing (in Coarse Grid): Iteration for {JACOBI_ITER_NUM} times ...")
+    print("approx_error (before): ", approx_error)
+    print("exact_solution (residual): ", restricted_residual)
+    for i in range(JACOBI_ITER_NUM):
+        print(f"Iteration {i + 1} ...")
+        approx_error = lib.weighted_jacobi_iter(N_COARSE, coarse_approx_matrix, approx_error, restricted_residual)
+        print("approx_error: ", approx_error)
+        plt.figure()
+        plot.plot_approximation_solution(approx_error, f"Weighted Jacobi Method_Coarse, iter = {i + 1}", N_COARSE)
 
     # E = IE_2h
     interpolated_approx_error = interpolation_matrix @ approx_error
+    print("interpolated_approx_error: ", interpolated_approx_error)
 
     # v := v + E
     approx_solution = approx_solution + interpolated_approx_error
+    print("approx_solution (after): ", approx_solution)
 
     plt.figure()
     plot.plot_approximation_solution(approx_solution, "Two-Grid Method, after interpolated", N_FINE)
 
     # 再度重み付きヤコビを3回反復する
-    for i in range(3):
-        approx_solution = lib.weighted_jacobi_iter(N_FINE, approx_matrix, approx_solution, exact_solution)
+    print('-' * 20)
+    print(f"Post-smoothing: Iteration for {JACOBI_ITER_NUM} times ...")
+    print("approx_solution (before): ", approx_solution)
+    print("exact_solution: ", exact_solution)
+    for i in range(JACOBI_ITER_NUM):
+        print(f"Iteration {i + 1} ...")
+        approx_solution = lib.weighted_jacobi_iter(N_FINE, approx_matrix, approx_solution, scaled_rhs_vector)
+        print("approx_solution: ", approx_solution)
 
     plt.figure()
     plot.plot_approximation_solution(approx_solution, "Two-Grid Method, final", N_FINE)
