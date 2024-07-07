@@ -58,6 +58,13 @@ def multigrid(num_divisions, approx_matrix, init_approx_solution, exact_solution
 
     return approx_solution
 
+def calc_error_rate(init_approx_solution, final_approx_solution, exact_solution):
+    init_error = np.linalg.norm(exact_solution - init_approx_solution)
+    after_error = np.linalg.norm(exact_solution - final_approx_solution)
+
+    error_rate = after_error / init_error
+    print("Error rate: ", error_rate * 100, "%")
+
 def main():
     # 近似解の初期値はランダムとする
     mat_size = N - 1
@@ -74,9 +81,12 @@ def main():
     print("Plotting exact solution...")
     plot.plot_exact_solution(exact_solution)
 
-    ans = multigrid(N, init_approx_matrix, init_approx_solution, exact_solution)
+    final_approx_solution = multigrid(N, init_approx_matrix, init_approx_solution, exact_solution)
 
-    print("Answer: ", ans)
+    calc_error_rate(init_approx_solution, final_approx_solution, exact_solution)
+
+    return 0
+
 
 if __name__ == "__main__":
     main()
