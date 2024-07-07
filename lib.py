@@ -12,35 +12,17 @@ def generate_init_approximation_solution(vec_size):
 
 # generate Poisson equation's exact solution
 def generate_exact_solution(num_divisions, vec_size, wavenumber):
-    h = 1.0 / num_divisions
-    exact_solution = np.zeros(num_divisions - 1)
 
-    for i in range(1, num_divisions):
-        x = i * h
-        exact_solution[i - 1] = np.sin(wavenumber * np.pi * x)
+    print(f"generating_exact_solution: num_divisions: {num_divisions}, vec_size: {vec_size}, wavenumber: {wavenumber}")
+    exact_solution = np.zeros(vec_size)
+    for i in range(num_divisions + 1):
+        if (i == 0) or (i == vec_size+1):
+            continue
+        else:
+            exact_solution[i-1] = np.sin(((i * 1.0) / num_divisions) * wavenumber * np.pi)
+    print(f"generated_exact_solution: {exact_solution}")
     
     return exact_solution
-
-    #print(f"generating_exact_solution: num_divisions: {num_divisions}, vec_size: {vec_size}, wavenumber: {wavenumber}")
-    #exact_solution = np.zeros(vec_size)
-    #for i in range(num_divisions + 1):
-    #    if (i == 0) or (i == vec_size+1):
-    #        continue
-    #    else:
-    #        exact_solution[i-1] = np.sin(((i * 1.0) / num_divisions) * wavenumber * np.pi)
-    #print(f"generated_exact_solution: {exact_solution}")
-    
-    return exact_solution
-
-def generate_rhs(num_divisions, wavenumber):
-    h = 1.0 / num_divisions
-    rhs = np.zeros(num_divisions - 1)
-
-    for i in range(1, num_divisions):
-        x = i * h
-        rhs[i - 1] = (wavenumber * np.pi) ** 2 * np.sin(wavenumber * np.pi * x)
-    
-    return rhs
 
 def generate_poisson_matrix(num_divisions):
     mat_size = num_divisions - 1
@@ -59,21 +41,21 @@ def generate_poisson_matrix(num_divisions):
     return poisson_matrix
 # 近似行列を生成
 def generate_init_approximation_matrix(num_divisions):
-    #mat_size = num_divisions - 1
-    #matrix = np.zeros((mat_size, mat_size))
-    matrix = generate_poisson_matrix(num_divisions)
+    mat_size = num_divisions - 1
+    matrix = np.zeros((mat_size, mat_size))
+    #matrix = generate_poisson_matrix(num_divisions)
 
-    #for i in range(mat_size):
-    #    if i == 0:
-    #        matrix[i][i] = 2.0
-    #        matrix[i][i+1] = -1.0
-    #    elif i == (mat_size - 1):
-    #        matrix[i][i-1] = -1.0
-    #        matrix[i][i] = 2.0
-    #    else:
-    #        matrix[i][i-1] = -1.0
-    #        matrix[i][i] = 2.0
-    #        matrix[i][i+1] = -1.0
+    for i in range(mat_size):
+        if i == 0:
+            matrix[i][i] = 2.0
+            matrix[i][i+1] = -1.0
+        elif i == (mat_size - 1):
+            matrix[i][i-1] = -1.0
+            matrix[i][i] = 2.0
+        else:
+            matrix[i][i-1] = -1.0
+            matrix[i][i] = 2.0
+            matrix[i][i+1] = -1.0
     
     #grid_width = 1.0 / num_divisions
 

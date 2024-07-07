@@ -48,13 +48,15 @@ def main():
     approx_matrix = lib.generate_init_approximation_matrix(N_FINE)
     #exact_solution = 1.0 / 3.0 * (lib.generate_exact_solution(N_FINE, N_FINE - 1, 1) + lib.generate_exact_solution(N_FINE, N_FINE - 1, 6) + lib.generate_exact_solution(N_FINE, N_FINE - 1, 36))
     exact_solution = lib.generate_exact_solution(N_FINE, N_FINE - 1, WAVENUM)
-    neko = 1.0 / (N_FINE ** 2)
+    #neko = 1.0 / (N_FINE ** 2)
     print("A: ", approx_matrix)
-    print("何かけてんの？: ", neko)
-    print("rhs: ", approx_matrix @ exact_solution)
-    scaled_rhs_vector = (1.0 / (N_FINE ** 2)) * approx_matrix @ exact_solution
-    #approx_solution = lib.generate_init_approximation_solution(N_FINE - 1)
-    approx_solution = np.zeros(N_FINE - 1)
+    print("u: ", exact_solution)
+    print("b: ", approx_matrix @ exact_solution)
+    #print("何かけてんの？: ", neko)
+    #print("rhs: ", approx_matrix @ exact_solution)
+    scaled_rhs_vector = approx_matrix @ exact_solution
+    approx_solution = lib.generate_init_approximation_solution(N_FINE - 1)
+    #approx_solution = np.zeros(N_FINE - 1)
     #scaled_approx_solution = N_FINE * N_FINE * approx_solution
 
     init_error = np.linalg.norm(exact_solution - approx_solution)
@@ -81,6 +83,8 @@ def main():
 
     # 残差 r = b - Av
     residual = scaled_rhs_vector - approx_matrix @ approx_solution
+    print("b: ", scaled_rhs_vector)
+    print("Av: ", approx_matrix @ approx_solution)
     print("residual: ", residual)
 
     # R, Iを生成

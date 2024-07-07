@@ -1,5 +1,6 @@
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 import plot
 import lib
@@ -45,6 +46,10 @@ def multigrid(num_divisions, approx_matrix, init_approx_solution, scaled_rhs_vec
         approx_solution = lib.weighted_jacobi_iter(num_divisions, approx_matrix, approx_solution, scaled_rhs_vector)
         print("approx_solution: ", approx_solution)
 
+    if num_divisions == N:
+        plt.figure()
+        plot.plot_approximation_solution(approx_solution, "Multi-Grid Method, pre-smoothing", N)
+
     # 残差 r = b - Av
     residual = scaled_rhs_vector - approx_matrix @ approx_solution
 
@@ -82,6 +87,10 @@ def multigrid(num_divisions, approx_matrix, init_approx_solution, scaled_rhs_vec
     approx_solution = approx_solution + interpolated_approx_error
     print("approx_solution (after): ", approx_solution)
 
+    if num_divisions == N:
+        plt.figure()
+        plot.plot_approximation_solution(approx_solution, "Multi-Grid Method, interpolated", N)
+
     # 再度重み付きヤコビを定数回反復する
     print('-' * 20)
     print(f"Post-smoothing: Iteration for {JACOBI_ITER_NUM} times ...")
@@ -113,7 +122,7 @@ def main():
     init_approx_matrix = lib.generate_init_approximation_matrix(N)
 
     exact_solution = lib.generate_exact_solution(N, mat_size, 1)
-    scaled_rhs_vector = (1.0 / (N ** 2)) * init_approx_matrix @ exact_solution
+    scaled_rhs_vector = init_approx_matrix @ exact_solution
 
     print("init_approx_solution: ", init_approx_solution)
     print("init_approx_matrix: ", init_approx_matrix)
@@ -123,11 +132,13 @@ def main():
     plot.plot_exact_solution(exact_solution, "Multi-Grid Method, exact", N)
 
     print("Plotting initial approximation solution...")
+    plt.figure()
     plot.plot_approximation_solution(init_approx_solution, "Multi-Grid Method, initial approx", N)
 
     final_approx_solution = multigrid(N, init_approx_matrix, init_approx_solution, scaled_rhs_vector)
 
     print("Plotting final approximation solution...")
+    plt.figure()
     plot.plot_approximation_solution(final_approx_solution, "Multi-Grid Method, final", N)
 
     calc_error_rate(init_approx_solution, final_approx_solution, exact_solution)
